@@ -1,0 +1,254 @@
+<!DOCTYPE html> <!-- Declares modern HTML5 document -->
+<html lang="en"> <!-- Root element -->
+<head> <!-- Metadata, PWA tags, and stylesheet -->
+<meta charset="utf-8"> <!-- UTF-8 encoding -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"> <!-- Tablet/desktop viewport scaling -->
+<meta name="theme-color" content="#f4f3ef"> <!-- Browser status bar color -->
+<meta name="apple-mobile-web-app-capable" content="yes"> <!-- Full-screen iPad Home Screen mode -->
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PantryPulse Kitchen">
+<link id="app-icon" rel="apple-touch-icon"> <!-- Populated by app.js -->
+<link id="app-manifest" rel="manifest"> <!-- Populated by app.js -->
+<title>PantryPulse — Kitchen Manager</title> <!-- Browser tab title -->
+<link rel="stylesheet" href="styles.css"> <!-- Links back-end stylesheet -->
+</head>
+<body>
+<main> <!-- Centered kitchen manager container -->
+  <header> <!-- Top brand header -->
+    <h1>Pantry<span>Pulse</span> <small class="mute" style="font-size:13px;font-weight:500">Kitchen Manager</small></h1>
+    <div class="row" style="gap:10px">
+      <span class="mute" id="syncBadge"></span> <!-- Live Supabase sync badge -->
+      <span class="mute" id="count"></span> <!-- Total pantry item count -->
+    </div>
+  </header>
+  <div id="banner"></div> <!-- Top alert banner for low-stock & expiring items -->
+
+  <!-- Top Navigation Tabs -->
+  <nav role="tablist">
+    <button role="tab" data-tab="pantry" aria-selected="true">Pantry</button> <!-- Tab 1: Inventory & QR stickers -->
+    <button role="tab" data-tab="scan" aria-selected="false">Scan</button> <!-- Tab 2: Camera & USB barcode scanner -->
+    <button role="tab" data-tab="restock" aria-selected="false">Restock &amp; Sync</button> <!-- Tab 3: Aisle shopping list, household & Supabase -->
+  </nav>
+
+  <!-- Autocomplete dropdown lists -->
+  <datalist id="units"><option value="pcs"><option value="kg"><option value="g"><option value="L"><option value="ml"><option value="packs"><option value="cans"><option value="bottles"><option value="boxes"></datalist>
+  <datalist id="zones"><option value="Dry Pantry"><option value="Fridge"><option value="Freezer"><option value="Spices & Oils"><option value="Beverages"><option value="Household & Cleaning"></datalist>
+
+  <!-- TAB 1: PANTRY INVENTORY -->
+  <section id="pantry" class="on">
+    <div class="box"> <!-- Quick-add bar with collapsible metadata drawer -->
+      <div class="row">
+        <input id="name" placeholder="Item name (e.g. Rice)" maxlength="40" aria-label="Item name">
+        <input id="qty" type="number" step="any" min="0" value="1" style="flex:0 0 72px" aria-label="Quantity">
+        <input id="unit" list="units" placeholder="Unit" maxlength="12" style="flex:0 0 90px" aria-label="Unit">
+        <input id="min" type="number" step="any" min="0" value="1" style="flex:0 0 72px" aria-label="Alert level">
+        <button class="btn" id="add">Add</button>
+      </div>
+      <details class="adv"> <!-- Optional step size, zone, price, expiry & barcode -->
+        <summary>+ Zone, step size, price, expiry &amp; barcode</summary>
+        <div class="grid2">
+          <div class="field"><label for="zone">Storage zone / aisle</label><input id="zone" list="zones" placeholder="Dry Pantry" maxlength="28"></div>
+          <div class="field"><label for="step">Step per tap / scan</label><input id="step" type="number" step="any" min="0.01" value="1"></div>
+          <div class="field"><label for="price">Est. price per pack</label><input id="price" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="field"><label for="exp">Best-before date</label><input id="exp" type="date"></div>
+        </div>
+        <div class="field" style="margin-top:8px"><label for="barcode">Retail barcode (optional)</label><input id="barcode" placeholder="Scan or type EAN / UPC" maxlength="32"></div>
+      </details>
+    </div>
+
+    <div class="row" style="margin-bottom:12px"> <!-- Search, zone filter & batch QR print -->
+      <input id="q" type="search" placeholder="Search items, zones, or barcodes…" aria-label="Search">
+      <select id="zFilter" aria-label="Filter by zone" style="flex:0 0 155px"><option value="">All zones</option></select>
+      <button class="ghost" id="printAll">Print QR labels</button>
+    </div>
+    <ul id="list"></ul> <!-- Dynamic pantry item cards -->
+  </section>
+
+  <!-- TAB 2: BARCODE & QR SCANNER -->
+  <section id="scan">
+    <div class="box">
+      <p style="margin:0 0 12px">Scan a QR sticker or retail product barcode to update stock.</p>
+      <div class="row" style="justify-content:space-between">
+        <div class="seg" role="group" aria-label="Scan mode">
+          <button id="mUse" aria-pressed="true">Use (−step)</button>
+          <button id="mAdd" aria-pressed="false">Restock (+step)</button>
+        </div>
+        <button class="ghost" id="soundToggle" aria-pressed="true">Sound: On</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="cam">Start camera</button>
+        <input id="code" placeholder="Or type / scan a code" aria-label="Code">
+        <button class="ghost" id="go">Apply</button>
+      </div>
+      <video id="vid" playsinline muted></video> <!-- Live camera video feed -->
+      <div id="msg" class="mute" style="margin-top:10px"></div> <!-- Scan confirmation message -->
+      <div id="unknownBox"></div> <!-- Auto-lookup card for unrecognized retail barcodes -->
+    </div>
+    <p class="mute">Supports QR stickers, EAN/UPC retail barcodes, and handheld USB/Bluetooth barcode scanners.</p>
+  </section>
+
+  <!-- TAB 3: RESTOCK, HOUSEHOLD & SYNC -->
+  <section id="restock">
+    <div class="box">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <strong style="display:block;font-size:15px">Store &amp; Currency</strong>
+          <span class="mute">Ordered items dim automatically so you never order twice</span>
+        </div>
+        <div class="row" style="gap:6px">
+          <select id="currency" aria-label="Currency" style="width:74px">
+            <option value="KSh">KSh</option>
+            <option value="$">$</option>
+            <option value="€">€</option>
+            <option value="£">£</option>
+          </select>
+          <select id="store" aria-label="Store" style="width:130px">
+            <option value="naivas">Naivas</option>
+            <option value="carrefour">Carrefour</option>
+            <option value="jumia">Jumia</option>
+            <option value="amazon">Amazon</option>
+            <option value="walmart">Walmart</option>
+            <option value="instacart">Instacart</option>
+            <option value="gshop">Google</option>
+            <option value="custom">Custom URL…</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" id="customWrap" style="display:none;margin-top:10px">
+        <input id="customUrl" placeholder="https://store.com/search?q={q}" aria-label="Custom store URL">
+      </div>
+    </div>
+
+    <h2>Shopping List</h2>
+    <div id="rlistWrap"></div>
+    <div id="estTotal" class="total-bar" style="display:none"></div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="autoOrder">Auto-fill cart</button>
+      <button class="ghost" id="restockAll">Mark all restocked</button>
+      <button class="ghost" id="shareList">Share list</button>
+      <button class="ghost" id="copyList">Copy list</button>
+    </div>
+    <p class="mute" id="orderStatus" style="margin-top:8px"></p>
+
+    <h2>Schedule, Household &amp; Live Sync</h2>
+    <div class="box">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <label for="freq">Reminder schedule</label>
+        <select id="freq"><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+      </div>
+      <p class="mute" id="due" style="margin:0 0 10px"></p>
+      <div class="row">
+        <button class="ghost" id="calReminder">Calendar reminder (.ics)</button>
+        <button class="ghost" id="notif">Enable alerts</button>
+        <button class="ghost" id="reviewed">Mark reviewed</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <strong style="display:block;margin-bottom:8px">Send List to Household</strong>
+      <div class="row">
+        <input id="rName" placeholder="Name (e.g. Alex)" maxlength="30" style="flex:1 1 110px">
+        <input id="rContact" placeholder="Email or phone (+254...)" maxlength="60" style="flex:2 1 160px">
+        <button class="btn" id="addRecip">Add</button>
+      </div>
+      <div id="recipList"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="ghost" id="emailAll">Email all</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <strong style="display:block;margin-bottom:6px">Backup &amp; Multi-Device Live Sync</strong>
+      <div class="row">
+        <button class="ghost" id="exportJson">Export backup (.json)</button>
+        <button class="ghost" id="importBtn">Restore backup</button>
+      </div>
+      <details class="adv">
+        <summary>Configure Live Household Sync (Supabase)</summary>
+        <div class="field" style="margin-top:8px"><label for="sbUrl">Supabase Project URL</label><input id="sbUrl" placeholder="https://xyzcompany.supabase.co"></div>
+        <div class="field" style="margin-top:8px"><label for="sbKey">Supabase Anon Public Key</label><input id="sbKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."></div>
+        <div class="field" style="margin-top:8px"><label for="sbRoom">Household Room Code</label><input id="sbRoom" placeholder="e.g. wanjiku-kitchen"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="saveSync">Connect &amp; Sync</button>
+          <button class="ghost" id="pullNow">Sync now</button>
+        </div>
+        <p class="mute" id="syncStatus" style="margin:8px 0 0"></p>
+        <details class="adv">
+          <summary>View 1-time Supabase SQL setup</summary>
+          <pre class="sql">create table pantry_rooms (
+  room_id text primary key,
+  payload jsonb not null,
+  updated_at timestamptz default now()
+);
+alter table pantry_rooms enable row level security;
+create policy "Public room access" on pantry_rooms
+  for all using (true) with check (true);</pre>
+        </details>
+      </details>
+    </div>
+  </section>
+</main>
+
+<input id="importFile" type="file" accept=".json,application/json" style="display:none">
+
+<!-- QR Sticker Modal -->
+<dialog id="dlg"><b id="dname"></b><div id="big"></div><div class="mute" id="did"></div>
+<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="dprint">Print sticker</button><button class="ghost" id="dclose">Close</button></div></dialog>
+
+<!-- Edit Item Modal -->
+<dialog id="editDlg">
+  <strong style="font-size:18px;display:block;margin-bottom:10px">Edit Item</strong>
+  <div class="field" style="margin-bottom:8px"><label for="eName">Item name</label><input id="eName" maxlength="40"></div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="field"><label for="eUnit">Unit</label><input id="eUnit" list="units" maxlength="12"></div>
+    <div class="field"><label for="eStep">Step per tap / scan</label><input id="eStep" type="number" step="any" min="0.01"></div>
+  </div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="field"><label for="eMin">Restock at</label><input id="eMin" type="number" step="any" min="0"></div>
+    <div class="field"><label for="ePrice">Est. price per pack</label><input id="ePrice" type="number" step="any" min="0"></div>
+  </div>
+  <div class="grid2" style="margin-bottom:8px">
+    <div class="field"><label for="eZone">Storage zone</label><input id="eZone" list="zones" maxlength="28"></div>
+    <div class="field"><label for="eExp">Best-before date</label><input id="eExp" type="date"></div>
+  </div>
+  <div class="field" style="margin-bottom:8px"><label for="eBarcode">Retail barcode (EAN / UPC)</label><input id="eBarcode" maxlength="32"></div>
+  <div class="field" style="margin-bottom:12px"><label for="eUrl">Direct product link</label><input id="eUrl" type="url" placeholder="https://www.naivas.online/product/..."></div>
+  <div class="row" style="justify-content:flex-end">
+    <button class="ghost" id="eCancel">Cancel</button>
+    <button class="btn" id="eSave">Save</button>
+  </div>
+</dialog>
+
+<!-- Pantry Help Kitchen Manager AI Drawer -->
+<button id="ph-fab" type="button">✦ Pantry Help</button>
+<dialog id="ph-drawer">
+  <div class="ph-head">
+    <div style="display:flex;align-items:center;gap:8px">
+      <strong style="font-size:17px">Pantry Help</strong>
+      <span class="ph-role">Kitchen Manager</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button type="button" class="ghost" id="ph-gear" style="min-height:34px;padding:4px 9px" title="AI Worker URL">⚙</button>
+      <button type="button" class="ghost" id="ph-close" style="min-height:34px;padding:4px 10px">✕</button>
+    </div>
+  </div>
+  <div id="ph-cfg">
+    <label for="ph-url"><strong>AI Worker URL</strong> (optional — leave blank for built-in helper)</label>
+    <input id="ph-url" type="url" placeholder="https://pantry-help.yourname.workers.dev">
+  </div>
+  <div class="ph-chips" id="ph-chips"></div>
+  <div id="ph-feed"></div>
+  <form class="ph-form" id="ph-form">
+    <input id="ph-input" placeholder="Ask where items are, how to scan QR, or add stock…" autocomplete="off">
+    <button type="submit" class="btn">Send</button>
+  </form>
+</dialog>
+
+<div id="sheet"></div> <!-- Hidden print sheet for 3-column QR sticker layout -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="app.js"></script> <!-- Back-end application logic -->
+</body>
+</html>

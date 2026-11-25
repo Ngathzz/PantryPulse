@@ -1,0 +1,104 @@
+/* Design tokens: warm stone & sage palette */
+:root{
+  --bg:#f4f3ef;--surface:#fcfbf8;--beige:#efeae0;--ink:#2c2823;--mute:#6e665c;
+  --line:#cbbba4;--accent:#465945;--on:#fcfbf8;--warn:#b35817;--warnbg:#f7ebe0;
+  --ordbg:#e4e9e2;--exp:#9e2a2b;--expbg:#fae6e6;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding-bottom:72px}
+main{max-width:640px;margin:0 auto;padding:18px 16px 32px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
+h1 span{color:var(--accent);font-weight:400}
+h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin:20px 0 10px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:16px 0 8px}
+
+/* Top Tab Navigation */
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+nav button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:10px 4px;font:inherit;color:var(--mute);cursor:pointer;min-height:44px}
+nav button[aria-selected="true"]{color:var(--accent);border-color:var(--accent);font-weight:700}
+section{display:none}
+section.on{display:block}
+
+/* Cards, Inputs & Buttons */
+.box,.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+input,select{font:inherit;color:var(--ink);background:var(--beige);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:42px;min-width:0}
+input::placeholder{color:var(--mute)}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;background:var(--surface)}
+button,a.ghost{font:inherit;cursor:pointer;text-decoration:none;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.btn{background:var(--accent);color:var(--on);border:0;border-radius:10px;padding:10px 15px;font-weight:600}
+.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-size:14px}
+.ghost:hover{background:var(--beige)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>input{flex:1 1 110px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field label{display:block;font-size:12px;color:var(--mute);margin-bottom:4px}
+.field input,.field select{width:100%}
+details.adv{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+details.adv summary{cursor:pointer;font-size:14px;color:var(--accent);font-weight:600;user-select:none}
+
+/* Item Cards & Quantity Steppers */
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.card{margin-bottom:0;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.card.low{border-left:4px solid var(--warn)}
+.card.ordered{opacity:.55;background:var(--beige);border-left:4px solid var(--accent)} /* Dims ordered items */
+.card.ordered strong{text-decoration:line-through;color:var(--mute)}
+.info{display:flex;flex-direction:column;gap:2px}
+.mute{color:var(--mute);font-size:13px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:11px;font-weight:600;color:var(--warn);background:var(--warnbg);border-radius:99px;padding:2px 8px}
+.tag.ord{color:var(--accent);background:var(--ordbg)}
+.tag.exp{color:var(--exp);background:var(--expbg)}
+.tag.zone{color:var(--mute);background:var(--beige);border:1px solid var(--line)}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{min-width:36px;height:36px;min-height:36px;padding:0 8px;border-radius:99px;border:1px solid var(--line);background:var(--beige);color:var(--ink);font-size:15px}
+.qty output{min-width:36px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--beige);padding-top:8px}
+.shop-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+/* Camera Scanner & Sync Helpers */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--beige)}
+.seg button{background:none;border:0;padding:8px 14px;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on);font-weight:600}
+video{width:100%;max-height:260px;background:#2c2823;border-radius:12px;margin-top:12px;display:none;object-fit:cover}
+#unknownBox{display:none;margin-top:12px;background:var(--beige);border:1px solid var(--line);border-radius:10px;padding:12px}
+#banner{display:none;background:var(--warnbg);color:var(--warn);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.empty{text-align:center;color:var(--mute);padding:28px 12px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.total-bar{display:flex;justify-content:space-between;align-items:center;background:var(--beige);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:12px;font-size:15px}
+.pill{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--beige);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:8px;font-size:14px}
+pre.sql{background:var(--beige);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;overflow-x:auto;color:var(--ink);margin:8px 0}
+
+/* Modals & Pantry Help Drawer */
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);padding:20px;max-width:440px;width:calc(100% - 24px)}
+dialog::backdrop{background:rgba(44,40,35,.4)}
+#dlg{text-align:center}
+#big{display:flex;justify-content:center;margin:12px 0}
+#big img,#big canvas{max-width:100%}
+#sheet{display:none}
+#ph-fab{position:fixed;right:16px;bottom:20px;z-index:40;background:var(--accent);color:var(--on);border:1px solid var(--line);border-radius:99px;padding:10px 16px;min-height:42px;font:600 14px/1 system-ui,-apple-system,sans-serif;box-shadow:0 4px 14px rgba(44,40,35,.2);display:flex;align-items:center;gap:6px}
+#ph-drawer{border-radius:18px 18px 0 0;margin:auto auto 0;max-width:520px;width:100%;max-height:86vh;padding:16px}
+#ph-drawer[open]{display:flex;flex-direction:column}
+.ph-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.ph-role{font-size:12px;background:var(--beige);border:1px solid var(--line);border-radius:99px;padding:4px 10px;color:var(--accent);font-weight:600}
+.ph-chips{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none}
+.ph-chips::-webkit-scrollbar{display:none}
+.ph-chip{flex:0 0 auto;background:var(--beige);border:1px solid var(--line);border-radius:99px;padding:6px 11px;min-height:32px;font-size:12px;color:var(--ink);white-space:nowrap}
+#ph-feed{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px 0;min-height:170px;max-height:44vh}
+.ph-msg{padding:10px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap;line-height:1.45}
+.ph-msg.ai{background:var(--beige);border:1px solid var(--line);align-self:flex-start;max-width:92%}
+.ph-msg.me{background:var(--accent);color:var(--on);align-self:flex-end;max-width:85%}
+.ph-form{display:flex;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.ph-form input{flex:1}
+#ph-cfg{display:none;background:var(--beige);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font-size:13px}
+#ph-cfg input{width:100%;background:var(--surface);margin-top:4px}
+
+/* Print-only 3-column QR Sticker Grid */
+@media print{
+  body>*:not(#sheet){display:none!important}
+  #sheet{display:grid!important;grid-template-columns:repeat(3,1fr);gap:10px;padding:0;background:#fff;color:#000}
+  .lab{border:1px dashed #999;padding:10px;text-align:center;break-inside:avoid;font-family:system-ui,sans-serif}
+  .lab .qr{display:flex;justify-content:center}
+  .lab b{display:block;font-size:13px;margin-top:6px}
+  .lab small{font-size:10px;color:#444}
+}
